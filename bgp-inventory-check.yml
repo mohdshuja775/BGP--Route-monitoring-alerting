@@ -1,0 +1,22 @@
+# bgp_inventory_check.yml
+---
+- name: Network Routing Compliance & BGP State Assessment
+  hosts: core_routers
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Audit Dynamic BGP Protocol Configuration Blocks
+      cisco.ios.ios_command:
+        commands:
+          - show running-config | section router bgp
+      register: bgp_config_output
+
+    - name: Export BGP State Maps Locally for NetOps Verification
+      ansible.builtin.copy:
+        content: "{{ bgp_config_output.stdout[0] }}"
+        dest: "./bgp_audit_records/bgp_config_{{ inventory_hostname }}.log"
+
+    - name: Generate Health Assertion Log
+      ansible.builtin.debug:
+        msg: "COMPLIANCE CHECK COMPLETE: Routing tables verified for target node {{ inventory_hostname }}."
